@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Leath algorithm
+19 January 2021
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+plt.style.use("fivethirtyeight")
+
+class Leath():
+    
+    def __init__(self,N=80,p=.6):
+        self.N = N
+        self.p = p
+        self.perimeter = {}
+        self.cluster = {(N//2,N//2):True}
+        self.output_array = np.zeros((N,N))
+        
+    def add_perimeter(self,pt):
+        """
+        given a point pt (tuple), add to a perimeter
+        all four nearest neighbors that are not already
+        in the cluster
+        """
+        nn = [(pt[0]+1,pt[1]), (pt[0]-1,pt[1]), (pt[0],pt[1]+1), \
+              (pt[0],pt[1]-1)]
+        for p in nn:
+            if p not in self.cluster and p not in self.perimeter:
+                self.perimeter[p] = True
+                
+    def grow_cluster(self,p):
+        """
+        for each pt in perimeter, if uniform
+        random [0,1] is less than p, add pt to
+        cluster. else mark point as inaccessible.
+        do something to keep cluster from leaving
+        domain.
+        """
+        self.new_cluster = []
+        for pt in self.perimeter:
+            if self.perimeter[pt] and self.p >= np.random.rand() \
+                and (pt[0] and pt[1]) < 80 and (pt[0] and pt[1]) > -1:
+                self.cluster[pt] = True
+                self.new_cluster.append(pt)
+            else:
+                self.perimeter[pt] = False
+        for pt in self.new_cluster:
+            if pt not in self.cluster:
+                self.cluster[pt] = True
+        self.output_array=list(self.cluster)
+            
+        
+                
+def animate(i, leath):
+    """
+    call add_perimeter() for each point in
+    cluster, then call grow_cluster().
+    set the new value of the cluster to the
+    image, and return image.
+    """
+    for pt in leath.cluster:
+       leath.add_perimeter(pt)
+    leath.grow_cluster(leath.p)
+    im.set_array(leath.output_array)
+    im.autoscale()
+    return im,
+    
+def main():
+    """
+    create a figure, create an image, animate
+    """
+    global im
+    leath = Leath()
+    """
+    i = 0
+    while i < 100:
+        for pt in leath.cluster:
+            leath.add_perimeter(pt)
+        leath.grow_cluster(leath.p)
+        print(leath.cluster)
+        i += 1
+    """
+    fig = plt.figure()
+    im = plt.imshow(leath.output_array, animated=True)
+    
+    anim = FuncAnimation(fig, animate, fargs=(leath,), frames=100, interval=120, blit=True)
+    plt.show()
+    
+if __name__ == "__main__":
+    main()
