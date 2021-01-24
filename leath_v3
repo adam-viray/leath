@@ -1,0 +1,132 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Leath algorithm
+24 January 2021
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+plt.style.use("fivethirtyeight")
+
+class Leath():
+    
+    def __init__(self,N=300,p=.5927):
+        self.N = N
+        self.p = p
+        self.seed = (N//2,N//2)
+        self.perimeter = {(self.seed[0]+1,self.seed[1]):True, \
+                          (self.seed[0]-1,self.seed[1]):True, \
+                          (self.seed[0],self.seed[1]+1):True, \
+                          (self.seed[0],self.seed[1]-1):True}
+        self.cluster = {self.seed:True}
+        self.output_array = np.zeros((N,N))
+        
+    def reset(self):
+        self.perimeter = {(self.seed[0]+1,self.seed[1]):True, \
+                          (self.seed[0]-1,self.seed[1]):True, \
+                          (self.seed[0],self.seed[1]+1):True, \
+                          (self.seed[0],self.seed[1]-1):True}
+        self.cluster = {self.seed:True}
+        self.output_array = np.zeros((self.N,self.N))
+        
+    def dist(self, pt1, pt2):
+        """
+        calculate and return euclidean distance between two points.
+        """
+        self.point1 = np.array(pt1)
+        self.point2 = np.array(pt2)
+        self.distance = np.linalg.norm(self.point1 - self.point2)
+        return self.distance
+    
+    def mass(self, r, p):
+        """
+        calculate and return total sum of points in cluster
+        within radius r of point p
+        """
+        self.i = 0
+        for pt in self.cluster:
+            if self.cluster[pt] and self.dist(pt, p) <= r:
+                self.i += 1
+        return self.i
+    
+    def does_span(self):
+        """
+        given a dictionary d, check if it reaches any edge
+        """
+        for pt in self.cluster:
+            if self.cluster[pt] and (pt[0] == 0 or pt[0] == self.N\
+                or pt[1] == 0 or pt[1] == self.N):
+                return True
+        return False
+    
+    def add_perimeter(self,pt):
+        """
+        given a point pt (tuple), add to a perimeter
+        all four nearest neighbors that are not already
+        in the cluster. prevent perimeter from going
+        out of bounds
+        """
+        nn = [(pt[0]-1,pt[1]), (pt[0]+1,pt[1]), (pt[0],pt[1]-1), (pt[0],pt[1]+1)]
+        for p in nn:
+            if p not in self.cluster and p not in self.perimeter \
+                and p[0] < self.N and p[0] > -1 and p[1] < self.N and p[1] > -1:
+
+                self.perimeter[p] = True
+                
+    def grow_cluster(self,p):
+        """
+        for each pt in perimeter, if uniform
+        random [0,1] is less than p, add pt to
+        cluster. else mark point as inaccessible.
+        """
+        for pt in self.perimeter:
+            if self.perimeter[pt] and self.p >= np.random.rand():
+                self.cluster[pt] = True
+                self.perimeter[pt] = False
+            else:
+                self.perimeter[pt] = False
+        for pt in self.cluster:
+            if self.cluster[pt]:
+                self.output_array[pt[1]][pt[0]] = 1    
+                
+    def iterate(self):
+        """
+        repeat leath's internal growth functions until
+        it it is fully grown.
+        """
+        for pt in self.cluster:
+           self.add_perimeter(pt)
+        self.grow_cluster(self.p)
+                
+def animate(i, leath):
+    """
+    call add_perimeter() for each point in
+    cluster, then call grow_cluster().
+    set the new value of the cluster to the
+    image, and return image.
+    """
+    leath.iterate()
+    im.set_array(leath.output_array)
+    im.autoscale()
+    return im,
+    
+def main():
+    """
+    create a figure, create an image, animate until
+    there is no more room
+    """
+    global im
+    leath = Leath()
+ 
+    fig = plt.figure()
+    im = plt.imshow(leath.output_array, animated=True)
+    
+    while np.any(np.fromiter(leath.perimeter.values(),dtype=np.int8)):
+        anim = FuncAnimation(fig, animate, fargs=(leath,), interval=0, blit=True)
+        plt.show()
+        
+    
+if __name__ == "__main__":
+    main()
